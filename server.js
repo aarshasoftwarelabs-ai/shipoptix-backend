@@ -30,7 +30,10 @@ app.post('/api/analyze-product', upload.single('image'), async (req, res) => {
     }
 
     if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Gemini API key is not configured on the server.' });
+        return res.status(500).json({ 
+            error: 'Server Misconfiguration: GEMINI_API_KEY is missing.',
+            details: 'The backend server on Render is missing the Gemini API key. Please add it in Render Environment Variables.'
+        });
     }
 
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -122,6 +125,35 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     res.status(500).json({ error: 'Failed to generate variants', details: error.message });
   }
 });
+
+app.post('/api/remove-background', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image uploaded' });
+    }
+
+    const { removeBackground } = require('@imgly/background-removal-node');
+    
+    // Convert Buffer to Blob as required by @imgly/background-removal-node
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+    
+    // Remove background (downloads models automatically on first run)
+    const resultBlob = await removeBackground(blob);
+    
+    // Convert back to base64
+    const arrayBuffer = await resultBlob.arrayBuffer();
+    const resultBuffer = Buffer.from(arrayBuffer);
+    const base64Image = resultBuffer.toString('base64');
+    
+    res.json({
+      image: base64Image,
+    });
+  } catch (error) {
+    console.error('Background Removal Error:', error);
+    res.status(500).json({ error: 'Failed to remove background', details: error.message });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
