@@ -155,6 +155,42 @@ app.post('/api/remove-background', upload.single('image'), async (req, res) => {
 });
 
 
+app.post('/api/calculate-shipping', (req, res) => {
+  try {
+    const { weight, length, width, height } = req.body;
+
+    if (!weight || !length || !width || !height) {
+      return res.status(400).json({ error: 'Missing dimensions or weight' });
+    }
+
+    const w = parseFloat(weight);
+    const l = parseFloat(length);
+    const wid = parseFloat(width);
+    const h = parseFloat(height);
+
+    // standard volumetric weight calculation for courier
+    const volumetricWeight = (l * wid * h) / 5000;
+    
+    // Pick the larger weight
+    const chargeableWeight = Math.max(w, volumetricWeight);
+    
+    // Base rate: ₹20 per kg
+    const cost = chargeableWeight * 20;
+
+    res.json({
+      cost: cost,
+      chargeableWeight: chargeableWeight,
+      actualWeight: w,
+      volumetricWeight: volumetricWeight
+    });
+
+  } catch (error) {
+    console.error('Calculation Error:', error);
+    res.status(500).json({ error: 'Failed to calculate shipping', details: error.message });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
