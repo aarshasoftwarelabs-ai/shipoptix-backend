@@ -103,31 +103,53 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     const generatedVariants = [];
 
     for (let i = 0; i < numVariants; i++) {
-      // 🚀 Advanced Meesho AI Bypass Logic 🚀
-      // 1. Resize randomly by 1 to 15 pixels
-      const resizeOffset = Math.floor(Math.random() * 15) + 1; 
+      // 🚀 Advanced Meesho AI Bypass & Automated Layouts 🚀
       
-      // 2. Modulate brightness, saturation, and hue randomly to break color histograms
-      const brightness = 1 + (Math.random() * 0.04 - 0.02); // +/- 2%
-      const saturation = 1 + (Math.random() * 0.06 - 0.03); // +/- 3%
-      const hue = Math.floor(Math.random() * 6) - 3; // +/- 3 degrees
+      // 1. Random aesthetic colors for background and borders
+      const bgColors = ['#F8FAFC', '#F1F5F9', '#FFF7ED', '#F3E8FF', '#F0FDF4', '#FEF2F2', '#FFFFFF'];
+      const borderColors = ['#151C72', '#F97316', '#FFFFFF', '#0F172A', '#E11D48', '#059669'];
+      const bg = bgColors[Math.floor(Math.random() * bgColors.length)];
+      const border = borderColors[Math.floor(Math.random() * borderColors.length)];
+      
+      // 2. Random layout properties
+      const padding = Math.floor(Math.random() * 60) + 20; // 20px to 80px padding
+      const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; // 70% chance of a border (5px to 25px)
+      
+      // Calculate target width for the product to fit inside 1080x1440 with padding
+      const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
 
-      // 3. Very slight blur to break high-frequency hash patterns
-      const blurSigma = 0.3 + (Math.random() * 0.2); 
+      // 3. Modulate original image slightly
+      const brightness = 1 + (Math.random() * 0.04 - 0.02);
+      const saturation = 1 + (Math.random() * 0.06 - 0.03);
 
-      const modifiedBuffer = await sharp(originalBuffer)
-        .resize({ width: 800 + resizeOffset })
-        .modulate({ 
-          brightness: brightness,
-          saturation: saturation,
-          hue: hue
+      const processedProduct = await sharp(originalBuffer)
+        .resize({ width: targetWidth, withoutEnlargement: true })
+        .modulate({ brightness, saturation })
+        .extend({
+          top: borderWidth, bottom: borderWidth, left: borderWidth, right: borderWidth,
+          background: border
         })
-        .blur(blurSigma) // Breaks edge detection hashes
-        .sharpen() // Recovers visual quality for humans
-        .withMetadata(false) // Strip all EXIF
         .toBuffer();
 
-      generatedVariants.push(modifiedBuffer.toString('base64'));
+      // 4. Create the final 1080x1440 canvas and composite
+      const finalCanvas = await sharp({
+        create: {
+          width: 1080,
+          height: 1440,
+          channels: 4,
+          background: bg
+        }
+      })
+      .composite([
+        {
+          input: processedProduct,
+          gravity: 'center'
+        }
+      ])
+      .jpeg({ quality: 90 }) // output as JPEG for smaller base64 payload
+      .toBuffer();
+
+      generatedVariants.push(finalCanvas.toString('base64'));
     }
 
     res.json({
