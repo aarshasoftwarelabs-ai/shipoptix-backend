@@ -5,6 +5,7 @@ const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const sharp = require('sharp');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -204,6 +205,28 @@ app.post('/api/calculate-shipping', (req, res) => {
   }
 });
 
+
+app.post('/api/create-payment-intent', async (req, res) => {
+  try {
+    const { amount, currency } = req.body;
+    
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount || 19900, // default ₹199
+      currency: currency || 'inr',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.error('Stripe Error:', error);
+    res.status(500).json({ error: 'Failed to create payment intent', details: error.message });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
