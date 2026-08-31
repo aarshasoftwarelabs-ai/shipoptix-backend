@@ -96,7 +96,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     
     // Simulate Gemini shipping cost calculation based on image size/complexities 
     // (A real app might analyze the image content to determine category and weight)
-    const simulatedShippingCosts = [41.23, 44.50, 48.00, 39.99];
+    const simulatedShippingCosts = [18.50, 24.00, 21.75, 19.99];
     const estimatedCost = simulatedShippingCosts[Math.floor(Math.random() * simulatedShippingCosts.length)];
 
     const generatedVariants = [];
