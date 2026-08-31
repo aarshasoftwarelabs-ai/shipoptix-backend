@@ -102,14 +102,28 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     const generatedVariants = [];
 
     for (let i = 0; i < numVariants; i++) {
-      // Generate random microscopic variations to bypass AI hashing
-      const resizeOffset = Math.floor(Math.random() * 5) + 1; // 1 to 5 pixels
-      const brightness = 1 + (Math.random() * 0.02 - 0.01); // +/- 1%
+      // 🚀 Advanced Meesho AI Bypass Logic 🚀
+      // 1. Resize randomly by 1 to 15 pixels
+      const resizeOffset = Math.floor(Math.random() * 15) + 1; 
       
+      // 2. Modulate brightness, saturation, and hue randomly to break color histograms
+      const brightness = 1 + (Math.random() * 0.04 - 0.02); // +/- 2%
+      const saturation = 1 + (Math.random() * 0.06 - 0.03); // +/- 3%
+      const hue = Math.floor(Math.random() * 6) - 3; // +/- 3 degrees
+
+      // 3. Very slight blur to break high-frequency hash patterns
+      const blurSigma = 0.3 + (Math.random() * 0.2); 
+
       const modifiedBuffer = await sharp(originalBuffer)
-        .resize({ width: 800 + resizeOffset }) // Slight resize
-        .modulate({ brightness: brightness }) // Slight brightness change
-        .withMetadata(false) // Strip EXIF
+        .resize({ width: 800 + resizeOffset })
+        .modulate({ 
+          brightness: brightness,
+          saturation: saturation,
+          hue: hue
+        })
+        .blur(blurSigma) // Breaks edge detection hashes
+        .sharpen() // Recovers visual quality for humans
+        .withMetadata(false) // Strip all EXIF
         .toBuffer();
 
       generatedVariants.push(modifiedBuffer.toString('base64'));
