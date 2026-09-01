@@ -116,9 +116,9 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const border = borderColors[Math.floor(Math.random() * borderColors.length)];
 
       // 2. Random layout properties
-      // 🚀 MINIMAL PADDING: Keeps AI-generated scenes looking natural, relying on SVG layers for AI bypass.
-      const padding = Math.floor(Math.random() * 30); // 0px to 30px padding
-      const borderWidth = Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 2 : 0; // 50% chance of a thin border (2px to 12px)
+      // 🚀 ORIGINAL PADDING: Keeps the product original size.
+      const padding = Math.floor(Math.random() * 60) + 20; // 20px to 80px padding
+      const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; // 70% chance of a border (5px to 25px)
 
       // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
@@ -145,8 +145,8 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
         const shadowSvg = `
           <svg width="1080" height="1080">
             <defs>
-              <filter id="blur">
-                <feGaussianBlur stdDeviation="25" />
+              <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="35" />
               </filter>
             </defs>
             <ellipse cx="540" cy="980" rx="350" ry="40" fill="rgba(0,0,0,0.25)" filter="url(#blur)" />
@@ -164,8 +164,8 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
           <svg width="1080" height="1080">
             <defs>
               <radialGradient id="grad" cx="50%" cy="50%" r="50%">
-                <stop offset="80%" stop-color="transparent" />
-                <stop offset="100%" stop-color="rgba(255,255,255,0.7)" />
+                <stop offset="50%" stop-color="rgba(255,255,255,0)" />
+                <stop offset="100%" stop-color="rgba(255,255,255,0.85)" />
               </radialGradient>
             </defs>
             <rect width="1080" height="1080" fill="url(#grad)" />
