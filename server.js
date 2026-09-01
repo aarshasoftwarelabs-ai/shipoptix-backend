@@ -115,7 +115,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const padding = Math.floor(Math.random() * 60) + 20; // 20px to 80px padding
       const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; // 70% chance of a border (5px to 25px)
       
-      // Calculate target width for the product to fit inside 1080x1440 with padding
+      // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
 
       // 3. Modulate original image slightly
@@ -131,11 +131,11 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
         })
         .toBuffer();
 
-      // 4. Create the final 1080x1440 canvas and composite
+      // 4. Create the final 1080x1080 canvas and composite
       const finalCanvas = await sharp({
         create: {
           width: 1080,
-          height: 1440,
+          height: 1080,
           channels: 4,
           background: bg
         }
