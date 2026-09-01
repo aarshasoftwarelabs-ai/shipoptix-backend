@@ -116,9 +116,9 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const border = borderColors[Math.floor(Math.random() * borderColors.length)];
 
       // 2. Random layout properties
-      // 🚀 ORIGINAL PADDING: Keeps the product original size.
-      const padding = Math.floor(Math.random() * 60) + 20; // 20px to 80px padding
-      const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; // 70% chance of a border (5px to 25px)
+      // 🚀 MINIMAL PADDING: Keeps AI-generated scenes looking natural, relying on SVG layers for AI bypass.
+      const padding = Math.floor(Math.random() * 30); // 0px to 30px padding
+      const borderWidth = Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 2 : 0; // 50% chance of a thin border (2px to 12px)
 
       // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
