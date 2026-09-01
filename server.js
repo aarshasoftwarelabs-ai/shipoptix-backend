@@ -93,6 +93,10 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     if (isNaN(numVariants) || numVariants < 10) numVariants = 10;
     if (numVariants > 100) numVariants = 100;
 
+    const aiDepthCamouflage = req.body.aiDepthCamouflage === 'true';
+    const aiEdgeDisruptor = req.body.aiEdgeDisruptor === 'true';
+    const antiAiNoise = req.body.antiAiNoise === 'true';
+
     const originalBuffer = req.file.buffer;
 
     // Simulate Gemini shipping cost calculation based on image size/complexities 
@@ -133,7 +137,60 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
         })
         .toBuffer();
 
-      // 4. Create the final 1080x1080 canvas and composite
+      // 4. Build composite layers
+      const layers = [];
+
+      // Add Fake 3D Shadow (Depth Camouflage) underneath the product
+      if (aiDepthCamouflage) {
+        const shadowSvg = `
+          <svg width="1080" height="1080">
+            <defs>
+              <filter id="blur">
+                <feGaussianBlur stdDeviation="25" />
+              </filter>
+            </defs>
+            <ellipse cx="540" cy="980" rx="350" ry="40" fill="rgba(0,0,0,0.25)" filter="url(#blur)" />
+          </svg>
+        `;
+        layers.push({ input: Buffer.from(shadowSvg), gravity: 'center' });
+      }
+
+      // Add the processed product
+      layers.push({ input: processedProduct, gravity: 'center' });
+
+      // Add Edge Glow (Edge Disruptor)
+      if (aiEdgeDisruptor) {
+        const edgeSvg = `
+          <svg width="1080" height="1080">
+            <defs>
+              <radialGradient id="grad" cx="50%" cy="50%" r="50%">
+                <stop offset="80%" stop-color="transparent" />
+                <stop offset="100%" stop-color="rgba(255,255,255,0.7)" />
+              </radialGradient>
+            </defs>
+            <rect width="1080" height="1080" fill="url(#grad)" />
+          </svg>
+        `;
+        layers.push({ input: Buffer.from(edgeSvg), gravity: 'center' });
+      }
+
+      // Add Anti-AI Noise
+      if (antiAiNoise) {
+        const noiseSvg = `
+          <svg width="1080" height="1080">
+            <defs>
+              <pattern id="noise" width="4" height="4" patternUnits="userSpaceOnUse">
+                <rect width="2" height="2" fill="rgba(0,0,0,0.02)" />
+                <rect x="2" y="2" width="2" height="2" fill="rgba(255,255,255,0.02)" />
+              </pattern>
+            </defs>
+            <rect width="1080" height="1080" fill="url(#noise)" />
+          </svg>
+        `;
+        layers.push({ input: Buffer.from(noiseSvg), gravity: 'center' });
+      }
+
+      // 5. Create the final 1080x1080 canvas and composite
       const finalCanvas = await sharp({
         create: {
           width: 1080,
@@ -142,12 +199,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
           background: bg
         }
       })
-        .composite([
-          {
-            input: processedProduct,
-            gravity: 'center'
-          }
-        ])
+        .composite(layers)
         .jpeg({ quality: 90 }) // output as JPEG for smaller base64 payload
         .toBuffer();
 
