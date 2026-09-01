@@ -112,21 +112,21 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const border = borderColors[Math.floor(Math.random() * borderColors.length)];
       
       // 2. Random layout properties
-      // 🚀 INCREASED PADDING: Shinks the product in the frame so Meesho's volumetric AI calculates a smaller size, dropping cost under ₹30.
-      const padding = Math.floor(Math.random() * 100) + 180; // 180px to 280px padding
+      // 🚀 MODERATE PADDING: Makes it small enough to bypass AI but not comically small.
+      const padding = Math.floor(Math.random() * 60) + 90; // 90px to 150px padding
       const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; // 70% chance of a border (5px to 25px)
       
       // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
 
-      // 3. Modulate original image slightly and add blur to trick Meesho volumetric AI scanner
+      // 3. Modulate original image slightly and add moderate blur to trick Meesho volumetric AI scanner
       const brightness = 1 + (Math.random() * 0.04 - 0.02);
       const saturation = 1 + (Math.random() * 0.06 - 0.03);
 
       const processedProduct = await sharp(originalBuffer)
         .resize({ width: targetWidth, withoutEnlargement: true })
         .modulate({ brightness, saturation })
-        .blur(2.5) // Slight blur to trick AI edge detection
+        .blur(1.2) // Slight blur to trick AI without looking too blurry
         .extend({
           top: borderWidth, bottom: borderWidth, left: borderWidth, right: borderWidth,
           background: border
