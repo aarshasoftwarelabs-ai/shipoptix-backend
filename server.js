@@ -31,10 +31,10 @@ app.post('/api/analyze-product', upload.single('image'), async (req, res) => {
     }
 
     if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ 
-            error: 'Server Misconfiguration: GEMINI_API_KEY is missing.',
-            details: 'The backend server on Render is missing the Gemini API key. Please add it in Render Environment Variables.'
-        });
+      return res.status(500).json({
+        error: 'Server Misconfiguration: GEMINI_API_KEY is missing.',
+        details: 'The backend server on Render is missing the Gemini API key. Please add it in Render Environment Variables.'
+      });
     }
 
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -60,20 +60,20 @@ app.post('/api/analyze-product', upload.single('image'), async (req, res) => {
 
     const result = await model.generateContent([prompt, ...imageParts]);
     const responseText = result.response.text();
-    
+
     // Clean up potential markdown formatting in response
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    
+
     try {
-        const parsedData = JSON.parse(cleanJson);
-        res.json(parsedData);
+      const parsedData = JSON.parse(cleanJson);
+      res.json(parsedData);
     } catch (parseError) {
-        res.json({
-            title: "Analyzed Product",
-            tags: "product, e-commerce, item",
-            category: "General",
-            raw_text: responseText
-        });
+      res.json({
+        title: "Analyzed Product",
+        tags: "product, e-commerce, item",
+        category: "General",
+        raw_text: responseText
+      });
     }
 
   } catch (error) {
@@ -94,7 +94,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     if (numVariants > 100) numVariants = 100;
 
     const originalBuffer = req.file.buffer;
-    
+
     // Simulate Gemini shipping cost calculation based on image size/complexities 
     // (A real app might analyze the image content to determine category and weight)
     const simulatedShippingCosts = [18.50, 24.00, 21.75, 19.99];
@@ -104,18 +104,18 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
 
     for (let i = 0; i < numVariants; i++) {
       // 🚀 Advanced Meesho AI Bypass & Automated Layouts 🚀
-      
+
       // 1. Random aesthetic colors for background and borders
       const bgColors = ['#F8FAFC', '#F1F5F9', '#FFF7ED', '#F3E8FF', '#F0FDF4', '#FEF2F2', '#FFFFFF'];
       const borderColors = ['#151C72', '#F97316', '#FFFFFF', '#0F172A', '#E11D48', '#059669'];
       const bg = bgColors[Math.floor(Math.random() * bgColors.length)];
       const border = borderColors[Math.floor(Math.random() * borderColors.length)];
-      
+
       // 2. Random layout properties
       // 🚀 ORIGINAL PADDING: Keeps the product original size.
       const padding = Math.floor(Math.random() * 60) + 20; // 20px to 80px padding
       const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; // 70% chance of a border (5px to 25px)
-      
+
       // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
 
@@ -126,7 +126,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const processedProduct = await sharp(originalBuffer)
         .resize({ width: targetWidth, withoutEnlargement: true })
         .modulate({ brightness, saturation })
-        .blur(1.5) // Slight blur to trick AI without shrinking the product
+        .blur(1.3) // Slight blur to trick AI without shrinking the product
         .extend({
           top: borderWidth, bottom: borderWidth, left: borderWidth, right: borderWidth,
           background: border
@@ -142,14 +142,14 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
           background: bg
         }
       })
-      .composite([
-        {
-          input: processedProduct,
-          gravity: 'center'
-        }
-      ])
-      .jpeg({ quality: 90 }) // output as JPEG for smaller base64 payload
-      .toBuffer();
+        .composite([
+          {
+            input: processedProduct,
+            gravity: 'center'
+          }
+        ])
+        .jpeg({ quality: 90 }) // output as JPEG for smaller base64 payload
+        .toBuffer();
 
       generatedVariants.push(finalCanvas.toString('base64'));
     }
@@ -172,18 +172,18 @@ app.post('/api/remove-background', upload.single('image'), async (req, res) => {
     }
 
     const { removeBackground } = require('@imgly/background-removal-node');
-    
+
     // Convert Buffer to Blob as required by @imgly/background-removal-node
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-    
+
     // Remove background (downloads models automatically on first run)
     const resultBlob = await removeBackground(blob);
-    
+
     // Convert back to base64
     const arrayBuffer = await resultBlob.arrayBuffer();
     const resultBuffer = Buffer.from(arrayBuffer);
     const base64Image = resultBuffer.toString('base64');
-    
+
     res.json({
       image: base64Image,
     });
@@ -209,10 +209,10 @@ app.post('/api/calculate-shipping', (req, res) => {
 
     // standard volumetric weight calculation for courier
     const volumetricWeight = (l * wid * h) / 5000;
-    
+
     // Pick the larger weight
     const chargeableWeight = Math.max(w, volumetricWeight);
-    
+
     // Base rate: ₹20 per kg
     const cost = chargeableWeight * 20;
 
@@ -233,7 +233,7 @@ app.post('/api/calculate-shipping', (req, res) => {
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const { amount, currency } = req.body;
-    
+
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount || 19900, // default ₹199
