@@ -127,10 +127,10 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const border = borderColors[Math.floor(Math.random() * borderColors.length)];
 
       // 2. Random layout properties
-      // 🚀 OPTIMIZED PADDING FOR 40-50 RS SHIPPING COST 🚀
-      // Too much padding or blur causes Meesho's AI to fail and fallback to the full 1080x1080 frame (High cost).
-      // Optimal padding (120-160px) and sharp edges ensure a tight, small bounding box.
-      const padding = Math.floor(Math.random() * 40) + 120; // 120px to 160px padding
+      // 🚀 EXTREME PADDING FOR 40-50 RS SHIPPING COST 🚀
+      // To get 40-50 Rs, the product MUST be very small in the frame (targetWidth ~ 360-480px)
+      // This forces the volumetric scanner to assign a very low physical volume.
+      const padding = Math.floor(Math.random() * 60) + 300; // 300px to 360px padding
       const borderWidth = Math.random() > 0.3 ? Math.floor(Math.random() * 20) + 5 : 0; 
 
       // Calculate target width for the product to fit inside 1080x1080 with padding
@@ -202,6 +202,19 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
         `;
         layers.push({ input: Buffer.from(noiseSvg), gravity: 'center' });
       }
+
+      // 4.5. Add Anti-Crop Anchors
+      // E-commerce platforms often auto-crop white backgrounds. This defeats our extreme padding.
+      // We place 1px almost-invisible dots at the extreme 4 corners to force the cropper to keep the full 1080x1080 size!
+      const anchorSvg = `
+        <svg width="1080" height="1080">
+          <circle cx="5" cy="5" r="3" fill="rgba(0,0,0,0.04)" />
+          <circle cx="1075" cy="5" r="3" fill="rgba(0,0,0,0.04)" />
+          <circle cx="5" cy="1075" r="3" fill="rgba(0,0,0,0.04)" />
+          <circle cx="1075" cy="1075" r="3" fill="rgba(0,0,0,0.04)" />
+        </svg>
+      `;
+      layers.push({ input: Buffer.from(anchorSvg), gravity: 'center' });
 
       // 5. Create the final 1080x1080 canvas and composite
       const finalCanvas = await sharp({
