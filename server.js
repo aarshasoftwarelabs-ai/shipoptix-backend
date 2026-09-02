@@ -97,7 +97,18 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
     const aiEdgeDisruptor = req.body.aiEdgeDisruptor === 'true';
     const antiAiNoise = req.body.antiAiNoise === 'true';
 
-    const originalBuffer = req.file.buffer;
+    let originalBuffer = req.file.buffer;
+
+    try {
+      const { removeBackground } = require('@imgly/background-removal-node');
+      const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+      const resultBlob = await removeBackground(blob);
+      const arrayBuffer = await resultBlob.arrayBuffer();
+      originalBuffer = Buffer.from(arrayBuffer);
+      console.log('Successfully removed background from uploaded image.');
+    } catch (bgError) {
+      console.warn('Background removal failed, falling back to original image:', bgError);
+    }
 
     // Simulate Gemini shipping cost calculation based on image size/complexities 
     // (A real app might analyze the image content to determine category and weight)
