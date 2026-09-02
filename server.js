@@ -136,12 +136,14 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
 
-      // 3. Keep edges sharp for tight bounding box
+      // 3. Keep edges sharp for tight bounding box and slightly rotate to break AI Classification
       const brightness = 1 + (Math.random() * 0.04 - 0.02);
       const saturation = 1 + (Math.random() * 0.06 - 0.03);
+      const rotateAngle = (Math.random() * 4) - 2; // -2 to +2 degrees
 
       const processedProduct = await sharp(originalBuffer)
         .resize({ width: targetWidth, withoutEnlargement: true })
+        .rotate(rotateAngle, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .modulate({ brightness, saturation })
         // Removed blur to ensure Meesho AI can draw a small, tight bounding box around the product
         .extend({
@@ -188,13 +190,15 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       }
 
       // Add Anti-AI Noise
+      // INCREASED NOISE to 8% to break CNN classification. If it classifies it as a 'Handbag',
+      // it applies default handbag weights (1.5kg). If it fails classification, it uses our tiny bounding box (~100g).
       if (antiAiNoise) {
         const noiseSvg = `
           <svg width="1080" height="1080">
             <defs>
-              <pattern id="noise" width="4" height="4" patternUnits="userSpaceOnUse">
-                <rect width="2" height="2" fill="rgba(0,0,0,0.02)" />
-                <rect x="2" y="2" width="2" height="2" fill="rgba(255,255,255,0.02)" />
+              <pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="3" height="3" fill="rgba(0,0,0,0.08)" />
+                <rect x="3" y="3" width="3" height="3" fill="rgba(255,255,255,0.08)" />
               </pattern>
             </defs>
             <rect width="1080" height="1080" fill="url(#noise)" />
