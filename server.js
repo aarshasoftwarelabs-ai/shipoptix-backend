@@ -5,6 +5,7 @@ const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const sharp = require('sharp');
+sharp.cache(false);
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 const app = express();
@@ -101,7 +102,13 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
 
     try {
       const { removeBackground } = require('@imgly/background-removal-node');
-      const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+      
+      // Resize to a manageable size before bg removal to prevent OOM on 512MB RAM servers
+      const downsizedBuffer = await sharp(req.file.buffer)
+        .resize(512, 512, { fit: 'inside' })
+        .toBuffer();
+
+      const blob = new Blob([downsizedBuffer], { type: req.file.mimetype });
       const resultBlob = await removeBackground(blob);
       const arrayBuffer = await resultBlob.arrayBuffer();
       originalBuffer = Buffer.from(arrayBuffer);
@@ -197,7 +204,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
         const noiseSvg = `
           <svg width="1080" height="1080">
             <defs>
-              <pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse">
                 <rect width="3" height="3" fill="rgba(0,0,0,0.08)" />
                 <rect x="3" y="3" width="3" height="3" fill="rgba(255,255,255,0.08)" />
               </pattern>
