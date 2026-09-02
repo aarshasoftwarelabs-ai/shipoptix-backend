@@ -136,7 +136,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       // Calculate target width for the product to fit inside 1080x1080 with padding
       const targetWidth = 1080 - (padding * 2) - (borderWidth * 2);
 
-      // 3. Keep edges sharp for tight bounding box and slightly rotate to break AI Classification
+      // 3. Keep edges fuzzy and slightly rotate to break AI Classification and Bounding Box
       const brightness = 1 + (Math.random() * 0.04 - 0.02);
       const saturation = 1 + (Math.random() * 0.06 - 0.03);
       const rotateAngle = (Math.random() * 4) - 2; // -2 to +2 degrees
@@ -144,6 +144,7 @@ app.post('/api/generate-shipping-variants', upload.single('image'), async (req, 
       const processedProduct = await sharp(originalBuffer)
         .resize({ width: targetWidth, withoutEnlargement: true })
         .rotate(rotateAngle, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .blur(1.8) // User requested explicit blur to bypass edge detection
         .modulate({ brightness, saturation })
         // Removed blur to ensure Meesho AI can draw a small, tight bounding box around the product
         .extend({
